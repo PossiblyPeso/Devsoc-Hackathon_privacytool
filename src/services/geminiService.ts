@@ -1,6 +1,14 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { AnalysisResult } from '../types';
 
+// Add declaration for process to satisfy TypeScript in a browser environment,
+// as required by the Gemini API guidelines for API key handling.
+declare const process: {
+  env: {
+    API_KEY: string;
+  };
+};
+
 const responseSchema = {
   type: Type.OBJECT,
   properties: {
@@ -61,7 +69,7 @@ export const analyzePolicyText = async (text: string): Promise<AnalysisResult> =
       },
     });
 
-    const jsonText = response.text.trim();
+    const jsonText = response.text?.trim();
     if (!jsonText) {
       throw new Error("The API returned an empty response. The content may have been blocked or the API key may be invalid.");
     }
@@ -77,6 +85,7 @@ export const analyzePolicyText = async (text: string): Promise<AnalysisResult> =
   } catch (error) {
     console.error("Error during analysis:", error);
     if (error instanceof Error) {
+        // Check for common API key-related errors
         if (error.message.includes("API key not valid")) {
             throw new Error("The provided Gemini API key is not valid. Please check your environment configuration.");
         }
