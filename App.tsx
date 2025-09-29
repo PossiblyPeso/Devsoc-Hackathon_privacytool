@@ -1,4 +1,4 @@
-import React, 'react';
+import React from 'react';
 import { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import { AnalyzeButton } from './components/AnalyzeButton';
@@ -21,7 +21,8 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // On load, check if an API key is already stored.
-    if (chrome.storage && chrome.storage.local) {
+    // Use `typeof chrome` check to prevent ReferenceError if not in an extension context
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
       chrome.storage.local.get(['geminiApiKey'], (result: { geminiApiKey?: string }) => {
         if (result.geminiApiKey) {
           setApiKey(result.geminiApiKey);
@@ -30,11 +31,14 @@ const App: React.FC = () => {
             setIsKeySaved(false); // Explicitly set to false to show setup
         }
       });
+    } else {
+        // Not in an extension, default to showing the setup screen.
+        setIsKeySaved(false);
     }
   }, []);
 
   const handleKeySave = (key: string) => {
-    if (chrome.storage && chrome.storage.local) {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
       chrome.storage.local.set({ geminiApiKey: key }, () => {
         setApiKey(key);
         setIsKeySaved(true);
@@ -76,7 +80,7 @@ const App: React.FC = () => {
   }, [apiKey]);
 
   useEffect(() => {
-    if (isKeySaved && chrome && chrome.runtime && chrome.runtime.onMessage) {
+    if (isKeySaved && typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
       const messageListener = (message: { type: string; content?: string }) => {
         if (message.type === 'PAGE_CONTENT' && typeof message.content === 'string') {
           startAnalysis(message.content);
@@ -94,7 +98,7 @@ const App: React.FC = () => {
     setError(null);
     setAnalysisResult(null);
 
-    if (!(chrome && chrome.tabs && chrome.scripting)) {
+    if (!(typeof chrome !== 'undefined' && chrome.tabs && chrome.scripting)) {
       setError("This must be run as a Chrome extension.");
       setIsLoading(false);
       return;

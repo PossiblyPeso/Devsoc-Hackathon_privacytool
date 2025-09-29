@@ -11,5 +11,8 @@
   "action": {
     "default_popup": "index.html",
     "default_title": "Analyze Page"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' https://cdn.tailwindcss.com https://aistudiocdn.com; object-src 'self'"
   }
 }
