@@ -5,7 +5,8 @@
   "description": "Uses Gemini to analyze a webpage's text for potential issues in its Privacy Policy or Terms of Service.",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage"
   ],
   "action": {
     "default_popup": "index.html",

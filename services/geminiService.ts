@@ -1,14 +1,5 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import type { AnalysisResult } from '../types';
-
-const API_KEY = process.env.API_KEY;
-
-if (!API_KEY) {
-  throw new Error("API_KEY environment variable is not set.");
-}
-
-const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 const responseSchema = {
   type: Type.OBJECT,
@@ -51,9 +42,14 @@ const responseSchema = {
   required: ["isRelevant", "relevanceReason", "issues"],
 };
 
+export const analyzePolicyText = async (text: string, apiKey: string): Promise<AnalysisResult> => {
+  if (!apiKey) {
+    throw new Error("Gemini API key is required for analysis.");
+  }
 
-export const analyzePolicyText = async (text: string): Promise<AnalysisResult> => {
   try {
+    const ai = new GoogleGenAI({ apiKey });
+
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: `Please analyze the following text. First, determine if it is a Privacy Policy, Terms of Service (TOS), or a similar legal document. If it is, identify and flag any clauses that could be problematic, unclear, or disadvantageous for a user. Focus on data collection, third-party sharing, user rights, liability limitations, and ambiguous language. \n\nTEXT TO ANALYZE:\n"""\n${text}\n"""`,
@@ -66,12 +62,11 @@ export const analyzePolicyText = async (text: string): Promise<AnalysisResult> =
 
     const jsonText = response.text.trim();
     if (!jsonText) {
-      throw new Error("The API returned an empty response. The content may have been blocked.");
+      throw new Error("The API returned an empty response. The content may have been blocked or the API key may be invalid.");
     }
     
     const parsedResult = JSON.parse(jsonText);
 
-    // Basic validation to ensure the parsed object matches our expected structure
     if (typeof parsedResult.isRelevant !== 'boolean' || !Array.isArray(parsedResult.issues)) {
         throw new Error("API returned a malformed JSON response.");
     }
@@ -79,10 +74,14 @@ export const analyzePolicyText = async (text: string): Promise<AnalysisResult> =
     return parsedResult as AnalysisResult;
 
   } catch (error) {
-    console.error("Error calling Gemini API:", error);
-    if (error instanceof Error && error.message.includes('JSON')) {
-        throw new Error("Failed to get a valid analysis from the AI. Please try again.");
+    console.error("Error during analysis:", error);
+    if (error instanceof Error) {
+        // Check for common API key-related errors
+        if (error.message.includes("API key not valid")) {
+            throw new Error("The provided Gemini API key is not valid. Please check the key and try again.");
+        }
+        throw error;
     }
-    throw new Error("Could not analyze the text. Please check your connection or API key.");
+    throw new Error("An unknown error occurred during the analysis process.");
   }
 };
