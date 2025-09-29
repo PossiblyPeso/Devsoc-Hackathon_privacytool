@@ -13,6 +13,6 @@
     "default_title": "Analyze Page"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self' https://aistudiocdn.com; object-src 'self'"
+    "extension_pages": "script-src 'self'; object-src 'self'"
   }
 }
