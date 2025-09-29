@@ -77,7 +77,6 @@ export const analyzePolicyText = async (text: string): Promise<AnalysisResult> =
   } catch (error) {
     console.error("Error during analysis:", error);
     if (error instanceof Error) {
-        // Check for common API key-related errors
         if (error.message.includes("API key not valid")) {
             throw new Error("The provided Gemini API key is not valid. Please check your environment configuration.");
         }

@@ -41,13 +41,14 @@ const responseSchema = {
   required: ["isRelevant", "relevanceReason", "issues"],
 };
 
-export const analyzePolicyText = async (text, apiKey) => {
-  if (!apiKey) {
-    throw new Error("Gemini API key is required for analysis.");
+// FIX: Refactored to use process.env.API_KEY as per the API guidelines.
+export const analyzePolicyText = async (text) => {
+  if (!process.env.API_KEY) {
+    throw new Error("Gemini API key is not configured. Please set the API_KEY environment variable.");
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -76,7 +77,7 @@ export const analyzePolicyText = async (text, apiKey) => {
     console.error("Error during analysis:", error);
     if (error instanceof Error) {
         if (error.message.includes("API key not valid")) {
-            throw new Error("The provided Gemini API key is not valid. Please check the key and try again.");
+            throw new Error("The provided Gemini API key is not valid. Please check your environment configuration.");
         }
         throw error;
     }

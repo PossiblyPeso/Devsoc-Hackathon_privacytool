@@ -1,20 +1,23 @@
-import React from 'https://aistudiocdn.com/react@^19.1.1';
-import { Header } from './components/Header.js';
-import { AnalyzeButton } from './components/AnalyzeButton.js';
-import { LoadingSpinner } from './components/LoadingSpinner.js';
-import { ResultsDisplay } from './components/ResultsDisplay.js';
-import { InitialState } from './components/InitialState.js';
-import { ErrorDisplay } from './components/ErrorDisplay.js';
-import { analyzePolicyText } from './services/geminiService.js';
+import React from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { Header } from './components/Header';
+import { AnalyzeButton } from './components/AnalyzeButton';
+import { LoadingSpinner } from './components/LoadingSpinner';
+import { ResultsDisplay } from './components/ResultsDisplay';
+import { InitialState } from './components/InitialState';
+import { ErrorDisplay } from './components/ErrorDisplay';
+import { analyzePolicyText } from './services/geminiService';
+import type { AnalysisResult } from './types';
 
-const { useState, useCallback, useEffect } = React;
+// FIX: Add type declaration for the `chrome` global object to resolve TypeScript errors.
+declare const chrome: any;
 
-const App = () => {
-  const [analysisResult, setAnalysisResult] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+const App: React.FC = () => {
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const startAnalysis = useCallback(async (text) => {
+  const startAnalysis = useCallback(async (text: string) => {
     if (!text || !text.trim()) {
       setError('Could not retrieve any text from the page. The page might be empty or protected.');
       setIsLoading(false);
@@ -35,7 +38,7 @@ const App = () => {
 
   useEffect(() => {
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
-      const messageListener = (message) => {
+      const messageListener = (message: { type: string; content?: string }) => {
         if (message.type === 'PAGE_CONTENT' && typeof message.content === 'string') {
           startAnalysis(message.content);
         }
@@ -81,26 +84,29 @@ const App = () => {
     }
   }, []);
 
-  return React.createElement("div", { className: "min-h-full bg-slate-900 text-slate-100 font-sans flex flex-col p-4" },
-    React.createElement("div", { className: "w-full max-w-4xl mx-auto" },
-      React.createElement(Header, null),
-      React.createElement("main", { className: "mt-6" },
-        // FIX: Removed API key setup UI to align with security best practices.
-        React.createElement(React.Fragment, null,
-          React.createElement("div", { className: "bg-slate-800/50 p-6 rounded-2xl shadow-2xl border border-slate-700" },
-            React.createElement("div", { className: "flex flex-col items-center space-y-4" },
-              React.createElement(AnalyzeButton, { onClick: handleAnalyzeClick, isLoading: isLoading }),
-            )
-          ),
-          React.createElement("div", { className: "mt-8" },
-            isLoading && React.createElement(LoadingSpinner, null),
-            error && React.createElement(ErrorDisplay, { message: error }),
-            !isLoading && !error && analysisResult && React.createElement(ResultsDisplay, { result: analysisResult }),
-            !isLoading && !error && !analysisResult && React.createElement(InitialState, null)
-          )
-        )
-      )
-    )
+  return (
+    <div className="min-h-full bg-slate-900 text-slate-100 font-sans flex flex-col p-4">
+      <div className="w-full max-w-4xl mx-auto">
+        <Header />
+        <main className="mt-6">
+          {/* FIX: Removed API key setup UI to align with security best practices. */}
+          <>
+            <div className="bg-slate-800/50 p-6 rounded-2xl shadow-2xl border border-slate-700">
+              <div className="flex flex-col items-center space-y-4">
+                  <AnalyzeButton onClick={handleAnalyzeClick} isLoading={isLoading} />
+              </div>
+            </div>
+
+            <div className="mt-8">
+              {isLoading && <LoadingSpinner />}
+              {error && <ErrorDisplay message={error} />}
+              {!isLoading && !error && analysisResult && <ResultsDisplay result={analysisResult} />}
+              {!isLoading && !error && !analysisResult && <InitialState />}
+            </div>
+          </>
+        </main>
+      </div>
+    </div>
   );
 };
 
