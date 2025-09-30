@@ -1,4 +1,10 @@
-import { GoogleGenAI, Type } from "https://aistudiocdn.com/@google/genai@^1.21.0";
+import { GoogleGenAI, Type } from "@google/genai";
+import type { AnalysisResult } from './types';
+
+// IMPORTANT: You must replace "YOUR_API_KEY_HERE" with your actual Gemini API key.
+// Note: Hardcoding keys is a security risk. For a public extension,
+// it's recommended to have the user provide their own key.
+const API_KEY = "YOUR_API_KEY_HERE";
 
 const responseSchema = {
   type: Type.OBJECT,
@@ -41,14 +47,13 @@ const responseSchema = {
   required: ["isRelevant", "relevanceReason", "issues"],
 };
 
-// FIX: Refactored to use process.env.API_KEY as per the API guidelines.
-export const analyzePolicyText = async (text) => {
-  if (!process.env.API_KEY) {
-    throw new Error("Gemini API key is not configured. Please set the API_KEY environment variable.");
+export const analyzePolicyText = async (text: string): Promise<AnalysisResult> => {
+  if (API_KEY === "YOUR_API_KEY_HERE") {
+    throw new Error("Gemini API key is not configured. Please edit src/backend/geminiService.ts and add your key.");
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -60,7 +65,7 @@ export const analyzePolicyText = async (text) => {
       },
     });
 
-    const jsonText = response.text.trim();
+    const jsonText = response.text?.trim();
     if (!jsonText) {
       throw new Error("The API returned an empty response. The content may have been blocked or the API key may be invalid.");
     }
@@ -71,13 +76,14 @@ export const analyzePolicyText = async (text) => {
         throw new Error("API returned a malformed JSON response.");
     }
 
-    return parsedResult;
+    return parsedResult as AnalysisResult;
 
   } catch (error) {
     console.error("Error during analysis:", error);
     if (error instanceof Error) {
+        // Check for common API key-related errors
         if (error.message.includes("API key not valid")) {
-            throw new Error("The provided Gemini API key is not valid. Please check your environment configuration.");
+            throw new Error("The provided Gemini API key is not valid. Please check the key in src/backend/geminiService.ts.");
         }
         throw error;
     }

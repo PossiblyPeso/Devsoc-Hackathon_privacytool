@@ -1,6 +1,6 @@
 import React from 'react';
-import type { PolicyIssue } from '../types';
-import { Severity } from '../types';
+import type { PolicyIssue } from '../../backend/types';
+import { Severity } from '../../backend/types';
 
 interface IssueCardProps {
   issue: PolicyIssue;

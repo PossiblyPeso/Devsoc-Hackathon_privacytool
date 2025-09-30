@@ -1,5 +1,5 @@
 import React from 'react';
-import type { AnalysisResult } from '../types';
+import type { AnalysisResult } from '../../backend/types';
 import { IssueCard } from './IssueCard';
 
 interface ResultsDisplayProps {
