@@ -1,14 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { AnalysisResult } from '../types';
 
-// Add declaration for process to satisfy TypeScript in a browser environment,
-// as required by the Gemini API guidelines for API key handling.
-declare const process: {
-  env: {
-    API_KEY: string;
-  };
-};
-
 const responseSchema = {
   type: Type.OBJECT,
   properties: {
@@ -50,14 +42,13 @@ const responseSchema = {
   required: ["isRelevant", "relevanceReason", "issues"],
 };
 
-// FIX: Refactored to use process.env.API_KEY as per the API guidelines.
-export const analyzePolicyText = async (text: string): Promise<AnalysisResult> => {
-  if (!process.env.API_KEY) {
-    throw new Error("Gemini API key is not configured. Please set the API_KEY environment variable.");
+export const analyzePolicyText = async (apiKey: string, text: string): Promise<AnalysisResult> => {
+  if (!apiKey) {
+    throw new Error("Gemini API key is not provided.");
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey });
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -87,7 +78,7 @@ export const analyzePolicyText = async (text: string): Promise<AnalysisResult> =
     if (error instanceof Error) {
         // Check for common API key-related errors
         if (error.message.includes("API key not valid")) {
-            throw new Error("The provided Gemini API key is not valid. Please check your environment configuration.");
+            throw new Error("The provided Gemini API key is not valid. Please check your key and try again.");
         }
         throw error;
     }
